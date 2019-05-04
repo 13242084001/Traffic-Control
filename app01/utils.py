@@ -7,7 +7,8 @@ from IPy import IP
 class GetIfaces(object):
 
     def __init__(self):
-        self.nic_list = netifaces.interfaces().remove('lo')
+        self.nic_list = netifaces.interfaces()
+        self.nic_list.remove('lo')
         self.interfaces_dict = {}
         self.nic_interface_info()
 

@@ -11,11 +11,13 @@ from app01.utils import IptablesHandle, TcHandle
 
 
 def init():
-    nic_list = netifaces.interfaces().remove('lo')
+    nic_list = netifaces.interfaces()
+    nic_list.remove("lo")
     for nic in nic_list:
+        print(nic)
         out = subprocess.getstatusoutput("tc qdisc add dev %s root htb" % (nic,))
         if out[0]:
-            print("初始化失败!")
+            print(out[1])
 
 init()
 
