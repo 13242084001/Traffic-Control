@@ -29,50 +29,42 @@ class GetIfaces(object):
 
     def get_net_hosts(self, addr, netmask):
         return IP(addr).make_net(netmask)
-    """
-    def __call__(self, *args, **kwargs):
-        self.nic_interface_info()
-    """
 
 
-class IptablesHandle(object):
-    def make_iptables_list(*args, **kwargs):
-        rule = kwargs.get("rule")
-        protocol = rule.get("protocol")
-        local_ip = rule.get("local_ip")
-        print(local_ip, type(local_ip))
-        local_port = rule.get("local_port")
-        remote_ip = rule.get("remote_ip")
-        remote_port = rule.get("remote_port")
-        controlling_ip = args
-        print(controlling_ip*3)
+class CmdHandle(object):
 
-        if not protocol:
-            protocol = "all"
+    def __init__(self, controlling_ip, **kwargs):
+        self.controlling_ip = controlling_ip
+        for i in kwargs:
+            for k in i:
+                self.__dict__[k] = i.get(k)
+        self.make_iptables_list()
+        self.make_tc_list()
 
-        if not local_ip:
-            local_ip = controlling_ip
+    def make_iptables_list(self):
+        
+        protocol = "all" if not self.protocol else self.protocol
+
+        local_ip = self.controlling_ip if not self.local_ip else self.local_ip
+
         src_string = " -s %s" % local_ip
-
-        if not local_port:
+        
+        if not self.local_port:
             sport_string = ""
-        elif len(str(local_port).split(",")) > 1:
-            sport_string = " –m multiport --sports %s" % local_port
+        elif len(str(self.local_port).split(",")) > 1:
+            sport_string = " –m multiport --sports %s" % self.local_port
         else:
             sport_string = " --dport %s" % local_port
-
-        if not remote_ip:
-            dst_string = ""
-        else:
-            dst_string = " -d %s" % remote_ip
-
-        if not remote_port:
+        
+        dst_string = "" if not remote_ip else " -d %s" % self.remote_ip
+        
+        if not self.remote_port:
             dport_string = ""
 
-        elif len(str(remote_port).split(",")) > 1:
-            dport_string = " –m multiport --dports %s" % remote_port
+        elif len(str(self.remote_port).split(",")) > 1:
+            dport_string = " –m multiport --dports %s" % self.remote_port
         else:
-            dport_string = " --dport %s" % remote_port
+            dport_string = " --dport %s" % self.remote_port
         iptables_cmd_list = []
         try:
             last_mark = models.Info.objects.all().last().mark
@@ -112,77 +104,51 @@ class IptablesHandle(object):
         for cmd in iptables_cmd_list:
             print(cmd)
 
-        return iptables_cmd_list, local_ip
+        self.iptables_cmd_list = iptables_cmd_list
+        self.local_ip = local_ip
 
-    def exec_iptables(*args):
-        for rule in args:
-            pass
-            #ouput = subprocess.getstatusoutput(rule)
-            #if ouput[0]:
-            #    return ouput[1]
-
-
-class TcHandle(object):
-    def confirm_dev(*args):
+    def confirm_dev(self):
         inet_obj = GetIfaces()
         net_dict = inet_obj.interfaces_dict
         print(net_dict)
         for k, v in net_dict.items():
             print(type(v.get("hosts")))
-            if args[0] in v.get("hosts"):
+            if self.controlling_ip in v.get("hosts"):
                 net_dict.pop(k)
                 return net_dict.keys()
 
-    def make_tc_list(*args, **kwargs):
-        controlling_ip = args
-        upstream = kwargs.get('upstream')
-        downstream = kwargs.get('downstream')
+    def make_tc_list(self):
+        dev = self.confirm_dev()
 
-        dev = TcHandle.confirm_dev(*args)
-        print(upstream, type(upstream))
-        # 带宽
-        rate = upstream.get("rate")
-        # 丢包
-        loss = upstream.get('loss')
-
-        # 延时
-        delay = upstream.get('delay')
-
-        # 包损坏
-        corruption = upstream.get("corruption")
-
-        # 包乱序
-        reorder = upstream.get("reorder")
-
-        if rate:
-            rate_string = " rate %skbps" % rate
+        if self.rate:
+            rate_string = " rate %skbps" % self.rate
         else:
             rate_string = " rate 10mbit"
 
-        if loss.get("percentage"):
-            if loss.get("correlation"):
-                loss_string = " loss %s%% %s%%" % (loss.get("percentage"), loss.get("correlation"))
+        if self.loss.get("percentage"):
+            if self.loss.get("correlation"):
+                loss_string = " loss %s%% %s%%" % (self.loss.get("percentage"), self.loss.get("correlation"))
             else:
-                loss_string = " loss %s%%" % loss.get("percentage")
+                loss_string = " loss %s%%" % self.loss.get("percentage")
         else:
             loss_string = ""
 
-        if delay.get("delay"):
-            delay_string = " delay %s%%" % delay.get("delay")
+        if self.delay.get("delay"):
+            delay_string = " delay %s%%" % self.delay.get("delay")
         else:
             delay_string = ""
 
-        if corruption.get("percentage"):
-            corruption_string = " corruption %s%%" % corruption.get("percentage")
+        if self.corruption.get("percentage"):
+            corruption_string = " corruption %s%%" % self.corruption.get("percentage")
         else:
             corruption_string = ""
 
-        if reorder.get("percentage"):
+        if self.reorder.get("percentage"):
 
-            if reorder.get("correlation"):
-                reorder_string = " reorder %s%% %s%%" % (reorder.get("percentage"), reorder.get("correlation"))
+            if self.reorder.get("correlation"):
+                reorder_string = " reorder %s%% %s%%" % (self.reorder.get("percentage"), self.reorder.get("correlation"))
             else:
-                reorder_string = " reorder %s%%" % reorder.get("percentage")
+                reorder_string = " reorder %s%%" % self.reorder.get("percentage")
         else:
             reorder_string = ""
 
@@ -199,14 +165,16 @@ class TcHandle(object):
             cmd3 = "tc qdisc add dev %s parent 1:%s netem" % (nic, parent_id) + loss_string + delay_string + \
                    corruption_string + reorder_string
             tc_cmd_list.extend([cmd1, cmd2, cmd3])
-        return tc_cmd_list, parent_id
+        self.tc_cmd_list = tc_cmd_list
+        self.parent_id = parent_id
 
-    def exec_tc(*args):
-        for rule in args:
-            pass
+    def exec_cmd():
+        for cmd_list in (self.iptables_cmd_list, self.tc_cmd_list):
+            for cmd in cmd_list
+                pass
             # ouput = subprocess.getstatusoutput(rule)
             # if ouput[0]:
             #    return ouput[1]
-
-
-
+    
+    def __call__(self):
+        self.exec_cmd()

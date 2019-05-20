@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from app01 import models
 import json
 import netifaces
 import subprocess
-from app01.utils import IptablesHandle, TcHandle
+from app01.utils import CmdHandle
 
 
 def init():
@@ -68,14 +67,11 @@ class Shaping(APIView):
         print(request.data)
         controlling_ip = request.META.get("REMOTE_ADDR")
 
-        # 生成iptables命令
-        iptables_cmd_list, local_ip = IptablesHandle.make_iptables_list(controlling_ip, **request.data)
-
-        request.data.pop("rule")
-        print("#" * 20)
-        print(request.data)
-        # 生成tc命令
-        tc_cmd_list, parent_id = TcHandle.make_tc_list(controlling_ip, **request.data)
+        handle = CmdHandle(controlling_ip, **request.data)
+        iptables_cmd_list = handle.iptables_cmd_list
+        local_ip = handle.local_ip
+        tc_cmd_list = handle.tc_cmd_list
+        parent_id = handle.parent_id
 
         try:
             # 如果该被控制ip有一个规则，则判断该规则是不是有名字的，如果是，则新增规则，并修改外键pk；如果没有名字，则修改该规则
@@ -95,11 +91,8 @@ class Shaping(APIView):
                                        iptables=iptables_cmd_list, parent_id=parent_id, tc=tc_cmd_list,
                                        profile_pk=profile_obj)
 
-
         # 执行相关命令
-        IptablesHandle.exec_iptables(*iptables_cmd_list)
-        TcHandle.exec_tc(*tc_cmd_list)
-
+        handle()
         return Response(request.data)
 
 
