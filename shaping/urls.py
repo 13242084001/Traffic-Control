@@ -15,13 +15,15 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, re_path
+from django.views.generic.base import TemplateView
 from app01 import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    re_path(r'^test/', views.ControlingInfo.as_view()),
+    re_path(r'^getDevIp', views.ControlingInfo.as_view()),
+    re_path(r'^$', TemplateView.as_view(template_name='index.html')),
     re_path(r'^shaping/', views.Shaping.as_view()),
     re_path(r'^CheckDevStatus', views.CheckDevStatus.as_view()),
     re_path(r'profile', views.Profile.as_view()),
-    re_path(r'action/(?P<slug>((1?[1-9]?\d|[1-2][0-4]\d|25[0-5])\.){3}(1?[1-9]?\d|[1-2][0-4]\d|25[0-5]))/', views.Action.as_view()),
+    #re_path(r'action/(?P<slug>((1?[1-9]?\d|[1-2][0-4]\d|25[0-5])\.){3}(1?[1-9]?\d|[1-2][0-4]\d|25[0-5]))/', views.Action.as_view()),
 ]
