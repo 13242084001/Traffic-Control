@@ -7,6 +7,9 @@ import json
 import netifaces
 import subprocess
 from app01.utils import CmdHandle
+from app01 import gol
+from app01 import band
+import threading
 
 
 def init():
@@ -19,6 +22,10 @@ def init():
         if out[0]:
             print(out[1])
 
+    gol._init()
+    t = threading.Thread(target=band.main, args=())
+    t.start()
+
 init()
 
 
@@ -27,7 +34,10 @@ class ControlingInfo(APIView):
         controlling_ip = request.META.get("REMOTE_ADDR")
         print(controlling_ip)
         controlled_ip_list = models.Info.objects.filter(controlling_ip=controlling_ip).all().values("controlled_ip", "status")
-        return Response({"client_ip": controlling_ip, "controlled_ip_list": controlled_ip_list})
+        gol._global_dict["client_ip"] = controlling_ip
+        gol._global_dict["controlled_ip_list"] = list(controlled_ip_list)
+        print(gol._global_dict)
+        return Response(gol._global_dict)
 
 
 class AddControlledIp(APIView):
