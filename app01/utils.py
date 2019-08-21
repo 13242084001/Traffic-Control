@@ -15,6 +15,7 @@ class GetIfaces(object):
     def nic_interface_info(self):
         for nic in self.nic_list:
             net_info_list = netifaces.ifaddresses(nic)[netifaces.AF_INET]
+            print("this is net_info_list %s" % net_info_list)
             addr = net_info_list[0]["addr"]
             netmask = net_info_list[0]["netmask"]
             hosts = self.get_net_hosts(addr, netmask)
@@ -30,6 +31,12 @@ class GetIfaces(object):
     def get_net_hosts(self, addr, netmask):
         return IP(addr).make_net(netmask)
 
+    def get_nic(self, nic_ip):
+        for nic in self.nic_list:
+            addr = netifaces.ifaddresses(nic)[netifaces.AF_INET][0].get("addr")
+            print('######%s' % addr)
+            if nic_ip == addr:
+                return nic
 
 class CmdHandle(object):
 
@@ -108,7 +115,7 @@ class CmdHandle(object):
     def confirm_dev(self, updown):
         inet_obj = GetIfaces()
         net_dict = inet_obj.interfaces_dict
-        print(net_dict)
+        print("this is net_dict %s" % net_dict)
         for k, v in net_dict.items():
             # print(type(v.get("hosts")))
             if self.controlling_ip in v.get("hosts"):
@@ -117,7 +124,7 @@ class CmdHandle(object):
                     print(net_dict.keys())
                     return net_dict.keys()
                 elif updown == "downstream":
-
+                    print('this is k %s' % k)
                     return k,
 
     def make_tc_list(self):

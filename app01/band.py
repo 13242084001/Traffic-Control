@@ -5,15 +5,18 @@ import time
 from collections import deque
 from functools import reduce
 from app01 import gol
+from app01.utils import GetIfaces
+
 
 last = [0,0]
 #gol._init()
 
 def get_mcu_ip():
-    cmd = "netstat -antp|awk '{print $5}'|grep 1089|cut -d: -f1|head -1"
-    out = subprocess.getstatusoutput(cmd)
-    if not out[0] and len(out) > 1:
-        return out[1]
+    #cmd = "netstat -antp|awk '{print $4,$5}'|grep 1089|head -1"
+    #out = subprocess.getstatusoutput(cmd)
+    #if not out[0] and out[1]:
+    return ["192.168.0.102", "192.168.0.10"]
+        #return [x.split(':')[0] for x in out[1].split('\n')]
 
 def check_iptables(mcu_ip):
     cmd1 = "iptables -L INPUT --line-number|grep %s|awk '{print $1}'" % mcu_ip
@@ -89,8 +92,12 @@ def get_network_status():
 
 
 def main():
-    mcu_ip = get_mcu_ip()
+    mcu_ip, nic_ip = get_mcu_ip()
+    iface_obj = GetIfaces()
+    nic = iface_obj.get_nic(nic_ip)
     gol.set_value('mcu_ip', mcu_ip)
+    gol.set_value('nic_ip', nic_ip)
+    gol.set_value('nic', nic)
     exec_iptables_cmd(mcu_ip)
     time.sleep(1)
     for dq in data_queue(calc, bandwidth, last):
