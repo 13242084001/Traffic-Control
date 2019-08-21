@@ -15,7 +15,30 @@ def get_mcu_ip():
     if not out[0] and len(out) > 1:
         return out[1]
 
+def check_iptables(mcu_ip):
+    cmd1 = "iptables -L INPUT --line-number|grep %s|awk '{print $1}'" % mcu_ip
+    cmd2 = "iptables -L OUTPUT --line-number|grep %s|awk '{print $1}'" % mcu_ip
+    iptables_dict = {}
+    for cmd in (cmd1, cmd2):
+        out = subprocess.getstatusoutput(cmd)
+        if not out[0] and out[1]:
+            if 'input_list' in iptables_dict:
+                iptables_dict["output_list"] = out[1].split("\n")
+            else:
+                iptables_dict["input_list"] = out[1].split("\n")
+    print('this is %s' % iptables_dict)
+    for k, v in iptables_dict.items():
+        v.reverse()
+        if "input_list" == k:
+            print('zheshi %s' % v)
+            for num in v:
+                subprocess.getstatusoutput("iptables -D INPUT %s" % num)
+        elif "output_list" == k:
+            for num in v:
+                subprocess.getstatusoutput("iptables -D OUTPUT %s" % num)
+
 def exec_iptables_cmd(mcu_ip):
+    check_iptables(mcu_ip)
     cmd1 = "iptables -I INPUT -s %s" % mcu_ip
     cmd2 = "iptables -I OUTPUT -d %s" % mcu_ip
     for cmd in (cmd1, cmd2):
@@ -56,7 +79,7 @@ def add(x, y):
 
 def get_network_status():
     #print(gol._global_dict)
-    out = subprocess.getstatusoutput("ping %s -f -c 100" % gol.get_value("mcu_ip"))
+    out = subprocess.getstatusoutput("ping %s -f -c 10" % gol.get_value("mcu_ip"))
     #print(out)
     if not out[0]:
         re = out[1].split(',')[2:]
