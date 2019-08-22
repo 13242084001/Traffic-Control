@@ -2,6 +2,7 @@ import subprocess
 from app01 import models
 import netifaces
 from IPy import IP
+import pandas
 
 
 class GetIfaces(object):
@@ -191,3 +192,11 @@ class CmdHandle(object):
 
     def __call__(self):
         self.exec_cmd()
+
+
+class Pd(object):
+    def __init__(self):
+        pd = pandas.DateFrame({'id': [1, 2,3], 'name': ['jack', 'nancy']})
+        excel = pd.to_excel('report.xlsx')
+
+test = Pd()
