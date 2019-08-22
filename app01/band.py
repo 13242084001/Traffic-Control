@@ -12,12 +12,12 @@ last = [0,0]
 #gol._init()
 
 def get_mcu_ip():
-    cmd = "netstat -antp|awk '{print $4,$5}'|grep 1089|head -1"
-    out = subprocess.getstatusoutput(cmd)
-    if not out[0] and out[1]:
-    #return ["192.168.0.102", "192.168.0.10"]
+    #cmd = "netstat -antp|awk '{print $4,$5}'|grep 1089|head -1"
+    #out = subprocess.getstatusoutput(cmd)
+    #if not out[0] and out[1]:
+    return ["192.168.0.102", "192.168.0.10"]
         #print('*************%s' % out[1].split())
-        return [x.split(':')[0] for x in out[1].split()]
+        #return [x.split(':')[0] for x in out[1].split()]
 
 def check_iptables(mcu_ip):
     cmd1 = "iptables -L INPUT --line-number|grep %s|awk '{print $1}'" % mcu_ip
