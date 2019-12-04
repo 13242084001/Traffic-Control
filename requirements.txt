@@ -21,7 +21,7 @@ constantly==15.1.0
 cryptography==2.1.4
 decorator==4.4.0
 distro-info==0.18
-Django==2.1.4
+Django==2.1.11
 django-celery==3.2.1
 django-cors-headers==2.4.0
 django-kombu==0.9.4
