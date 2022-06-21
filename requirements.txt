@@ -47,7 +47,7 @@ language-selector==0.1
 Markdown==3.0.1
 MarkupSafe==1.0
 netifaces==0.10.9
-numpy==1.16.3
+numpy==1.22.0
 oauthlib==2.0.6
 opencv-python==4.1.0.25
 parso==0.3.4
